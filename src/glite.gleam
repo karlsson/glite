@@ -15,14 +15,7 @@
 //// If the service process receives more than 9 requests to start handlers it
 //// will exit (panic). Just a hardcoded limit to test the one_for_all restart.
 
-import gleam/erlang/atom.{type Atom}
 import gleam/erlang/process
-import gleam/io
-import gleam/otp/actor
-import gleam/otp/static_supervisor as sup
-import gleam/otp/supervision
-import glite/client
-import glite/service
 
 /// Gleam run makes sure that all registered applications are started,
 /// so the main function will just sleep forever.
@@ -31,7 +24,7 @@ import glite/service
 /// application_start_module = "\<thismodule>\"
 /// which in this case is `glite_app`.
 pub fn main() {
-  io.println("Hello from gliteapp!")
+  echo "Hello from glite main()"
   observer_start()
   process.sleep_forever()
 }
@@ -40,63 +33,3 @@ type ErlangResult
 
 @external(erlang, "observer", "start")
 fn observer_start() -> ErlangResult
-
-// --------------------- Erlang/OTP Application part --------------------
-/// The Erlang/OTP application start callback.
-/// Responsible to start the "top" supervisor process and return its Pid
-/// to the application controller.
-pub fn start(_app: Atom, _type) -> Result(process.Pid, actor.StartError) {
-  io.println("Application start - starts the top supervisor")
-  case start_supervisor() {
-    Ok(actor.Started(pid, _data)) -> {
-      let sup_name = process.new_name("one_for_all_sup")
-      let _ = process.register(pid, sup_name)
-      Ok(pid)
-    }
-    Error(reason) -> Error(reason)
-  }
-}
-
-/// The Erlang/OTP application stop callback.
-/// This is called after all processes in the supervisor tree have
-/// been shutdown by the application controller. Responsible for any
-/// final clean up actions.
-pub fn stop(_state: a) -> Atom {
-  atom.create("ok")
-}
-
-// -------- Supervisor ----------------------------------
-/// Erlang application top supervisor
-fn start_supervisor() -> Result(actor.Started(sup.Supervisor), actor.StartError) {
-  let sub_sup_name = process.new_name("one_for_one_sup")
-  let service_name = process.new_name("glite_service")
-  let service_subject = process.named_subject(service_name)
-  let service_child =
-    supervision.worker(fn() {
-      Ok(actor.Started(
-        service.start_link(sub_sup_name, service_name),
-        service_subject,
-      ))
-    })
-  let client_child =
-    supervision.worker(fn() {
-      Ok(actor.Started(client.start_link(service_subject), Nil))
-    })
-
-  let one_for_one_sup =
-    supervision.supervisor(fn() {
-      let assert Ok(actor.Started(pid, data)) =
-        sup.new(sup.OneForOne) |> sup.start
-      case process.register(pid, sub_sup_name) {
-        Ok(Nil) -> Ok(actor.Started(pid, data))
-        Error(Nil) -> Error(actor.InitFailed("Supervisor name already exist"))
-      }
-    })
-  sup.new(sup.OneForAll)
-  |> sup.add(one_for_one_sup)
-  |> sup.add(service_child)
-  |> sup.add(client_child)
-  |> sup.add(client_child)
-  |> sup.add(client_child)
-  |> sup.start
-}

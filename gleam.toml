@@ -15,11 +15,14 @@ repository = { type = "github", user = "karlsson", repo = "glite" }
 [dependencies]
 gleam_stdlib = ">= 0.60.0 and < 2.0.0"
 gleam_erlang = ">= 1.0.0 and < 2.0.0"
-gleam_otp = ">= 1.0.0 and < 2.0.0"
+# gleam_otp = ">= 1.0.0 and < 2.0.0"
+gleam_otp = { path = "../otp" }
 glydamic = { git = "https://github.com/karlsson/glydamic", ref="main"}
 
 [dev-dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"
 
 [erlang]
-application_start_module = "glite"
+application_start_module = "glite_app"
+# application_start_module = "gleam@otp@application"
+# application_start_argument = "glite_app"

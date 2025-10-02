@@ -19,9 +19,7 @@ pub fn start(
   case process.named(sup_name) {
     Ok(pid) -> {
       let child_spec =
-        supervision.worker(fn() {
-          gleam.Ok(actor.Started(start_link(client_subject), Nil))
-        })
+        supervision.worker(fn() { start_link(client_subject) })
         |> supervision.restart(supervision.Temporary)
       child.start(pid, child_spec)
     }
@@ -29,14 +27,14 @@ pub fn start(
   }
 }
 
-pub fn start_link(client_subject: CReqS(String)) -> Pid {
-  let assert Ok(actor.Started(pid, _subject1)) =
-    actor.new_with_initialiser(100, fn(mysubject) {
-      init(mysubject, client_subject)
-    })
-    |> actor.on_message(loop)
-    |> actor.start()
-  pid
+pub fn start_link(client_subject: CReqS(String)) {
+  //  let assert Ok(actor.Started(pid, _subject1)) =
+  actor.new_with_initialiser(100, fn(mysubject) {
+    init(mysubject, client_subject)
+  })
+  |> actor.on_message(loop)
+  |> actor.start()
+  //  pid
 }
 
 fn init(

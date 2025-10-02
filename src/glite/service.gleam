@@ -4,14 +4,19 @@ import gleam/otp/actor
 import gleam/string
 import glite/handler
 import glite/msg.{type SReqS}
-import glydamic/child
 
-type State {
-  State(sup_name: process.Name(String), my_subject: SReqS(String), no_reqs: Int)
+// import glydamic/child
+import gleam/otp/factory_supervisor as fsup
+
+pub type SupName(c) =
+  process.Name(fsup.Message(process.Subject(msg.ClientRequest(String)), c))
+
+type State(c) {
+  State(sup_name: SupName(c), my_subject: SReqS(String), no_reqs: Int)
 }
 
 pub fn start_link(
-  sup_name: process.Name(String),
+  sup_name: SupName(c),
   name: process.Name(msg.ServiceRequest(String)),
 ) -> process.Pid {
   let servsub = process.named_subject(name)
@@ -32,11 +37,12 @@ pub fn start_link(
   pid
 }
 
-fn loop(state: State, msg) {
+fn loop(state: State(a), msg) {
   case msg, state.no_reqs {
     msg.SReq(sender_subject), x if x < 10 -> {
-      case handler.start(state.sup_name, sender_subject) {
-        Ok(child.SupervisedChild(pid, _id)) -> {
+      case fsup.start_child(fsup.get_by_name(state.sup_name), sender_subject) {
+        // Ok(child.SupervisedChild(pid, _id)) -> {
+        Ok(actor.Started(pid, _)) -> {
           let reply = "Starting handler " <> string.inspect(pid)
           io.println(reply)
         }
