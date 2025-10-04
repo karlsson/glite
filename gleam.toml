@@ -1,5 +1,5 @@
 name = "glite"
-version = "1.1.0"
+version = "1.2.0"
 
 # Fill out these fields if you intend to generate HTML documentation or publish
 # your project to the Hex package manager.
@@ -15,14 +15,13 @@ repository = { type = "github", user = "karlsson", repo = "glite" }
 [dependencies]
 gleam_stdlib = ">= 0.60.0 and < 2.0.0"
 gleam_erlang = ">= 1.0.0 and < 2.0.0"
-# gleam_otp = ">= 1.0.0 and < 2.0.0"
-gleam_otp = { path = "../otp" }
-glydamic = { git = "https://github.com/karlsson/glydamic", ref="main"}
+gleam_otp = ">= 1.0.0 and < 2.0.0"
 
 [dev-dependencies]
 gleeunit = ">= 1.0.0 and < 2.0.0"
 
 [erlang]
 application_start_module = "glite_app"
+# Once the gleam/otp/application module is in place:
 # application_start_module = "gleam@otp@application"
 # application_start_argument = "glite_app"

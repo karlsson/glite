@@ -4,24 +4,29 @@ _The Gleamlins little intro to Erlang applications_
 The Erlang documentation for applications states:
 >After creating code to implement a specific functionality, you might consider transforming it into an application — a component that can be started and stopped as a unit, as well as reused in other systems. [<sup>1</sup>](#ref)
 
-So how does one turn a Gleam project into an Erlang application? Well many things are already in place actually. The `gleam build`command already creates a `<project>.app`file in the in the build ebin directory, and that is what the Erlang application controller basically needs.
+So how does one turn a Gleam project into an Erlang application? Well many things are already in place actually. The `gleam build`command already creates a `<project>.app`file in the in the build ebin directory (e.g. ```build/dev/erlang/glite/ebin/glite.app```), and that is what the Erlang application controller basically needs.
 
 An Erlang application may come in two "flavours", one as a plain library like `stdlib` which does not need to start any processes, and one where the application controller starts a service with several processes under a supervision tree. For the second case the controller checks the `<project>.app` file for the `mod` property which may look like:
+
+__build/dev/erlang/glite/ebin/glite.app__
 ```erlang
-{mod, {'glite', []}}
+{mod, {'glite_app', []}}
 ```
 where the second tuple contains the start module and any start arguments.
 
 ## Configuration
 When `gleam run` is executed it actually starts all registered applications (those having the `mod` property set). In order to enable it in our application we need to append to the `gleam.toml` file [<sup>2</sup>](#ref):
+
+__gleam.toml__
 ```toml
 [erlang]
-application_start_module = "glite"
+application_start_module = "glite_app"
 ```
 **This will add the mod property to the `glite.app` file.**
 
 ## Callback functions
-In the start module the application controller expects two callback functions, `start/2` and `stop/1`, to be implemented. Since Gleam compiles to Erlang source there is no problem to implement those in the Gleam project module, `glite` in this case, if you do not prefer a pure erlang callback module:
+In the start module the application controller expects two callback functions, `start/2` and `stop/1`, to be implemented.
+Since Gleam compiles to Erlang source there is no problem to implement those in a Gleam module, `src/glite_app.gleam` in this case:
 
 ```rust
 // --------------------- Erlang/OTP Application part --------------------
@@ -52,6 +57,7 @@ pub fn stop(_state: a) -> Atom {
 /// Erlang application top supervisor
 fn start_supervisor() -> Result(actor.Started(sup.Supervisor), actor.StartError) {
 ...
+}
 ```
 
 <!--

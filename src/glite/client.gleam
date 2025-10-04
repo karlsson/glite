@@ -1,8 +1,9 @@
 import gleam/erlang/process
 import gleam/io
 import gleam/otp/actor
+import gleam/string
+import glite
 import glite/msg
-import glydamic/child
 
 //import gleam/string
 
@@ -27,21 +28,16 @@ fn init(
   actor.Initialised(State, msg.ClientRequest(String), msg.CReqS(String)),
   String,
 ) {
-  let _ = child.set_label("glite_client")
-  // let self = string.inspect(process.self())
-  // io.println("client init: " <> self)
-  // echo service_subject
+  let _ = glite.set_label("glite_client")
   let selector = process.new_selector() |> process.select(mysubject)
-
   let state = State(mysubject, service_subject)
 
-  let initialised =
-    actor.initialised(state)
-    |> actor.selecting(selector)
-    |> actor.returning(mysubject)
-
   process.send_after(mysubject, 100, msg.SelfReq("initphase"))
-  Ok(initialised)
+
+  actor.initialised(state)
+  |> actor.selecting(selector)
+  |> actor.returning(mysubject)
+  |> Ok
 }
 
 fn loop(
@@ -60,7 +56,8 @@ fn loop(
       process.send(state.service_subject, msg.SReq(state.my_subject))
     }
     msg.CReq(handler_subject, request) -> {
-      io.println(request)
+      let a = process.subject_owner(handler_subject) |> string.inspect
+      io.println(a <> ": " <> request)
       process.send_after(
         handler_subject,
         4000,
