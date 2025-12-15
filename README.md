@@ -61,11 +61,11 @@ fn start_supervisor() -> Result(actor.Started(sup.Supervisor), actor.StartError)
 ```
 
 <!--
- [![Package Version](https://img.shields.io/hexpm/v/gliteapp)](https://hex.pm/packages/gliteapp)
- [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/gliteapp/)
+ [![Package Version](https://img.shields.io/hexpm/v/glite)](https://hex.pm/packages/glite)
+ [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/glite/)
 
 ```sh
-gleam add gliteapp@1
+gleam add glite@1
 ```
 ```gleam
 import gliteapp
@@ -76,7 +76,7 @@ pub fn main() -> Nil {
 ```
 -->
 <!-- 
-Further documentation can be found at <https://hexdocs.pm/gliteapp>.
+Further documentation can be found at <https://hexdocs.pm/glite>.
 -->
 
 ## Joining the ecosystem
@@ -141,7 +141,39 @@ Registered            Current Function                     Stack
 gleam run   # Run the project
 ```
 
+## Starting observer on another node
+
+Generally one should be careful to run observer on a "production" server since it may load the VM and also involves wx (graphics) code which may not be present on an erlang backend system.
+
+If the erlang VM is started in distributed mode one can start the observer on a remote node and connect to the running system.
+
+A simple example for glite is to start two nodes on the same machine.
+In one shell:
+```shell
+cd build/dev/erlang/
+erl -sname backend -pa ./*/ebin
+(backend@mymachine)1> application:ensure_all_started(glite).
+src/glite_app.gleam:36
+"Application start - starts the top supervisor"
+{ok,[gleam_stdlib,gleam_erlang,gleam_otp,gleeunit,glite]}
+Starting handler //erl(<0.102.0>)
+Starting handler //erl(<0.103.0>)
+Starting handler //erl(<0.104.0>)
+..
+```
+In another shell:
+```shell
+erl -sname observe
+(observe@mymachine)1> observer:start().
+```
+In observer there is a `Nodes` tab and under it one may select `backend@mymachine` to connect and display the applications/processes under that node.
+When starting the nodes on different machines you should make sure to set the same _magic cookie_ on both nodes using flag `-setcookie Cookie` or any other way [<sup>3</sup>](#ref). You may also have to "manually" connect to the other node using the `Connect Node` tab in observer.
+
+> [!NOTE]
+> There is an alternative implementation to observer in Gleam - Spectator [<sup>4</sup>](#ref) with an [example](https://github.com/JonasGruenwald/spectator/tree/main/example) of inspecting an application running with Docker.
 
 ## <span id="ref">References</span>
 [1]: [Applications](https://www.erlang.org/doc/system/applications.html) - Erlang documentation.<br/>
-[2]: [gleam.toml](https://gleam.run/writing-gleam/gleam-toml/)
+[2]: [gleam.toml](https://gleam.run/writing-gleam/gleam-toml/)<br/>
+[3]: [Distributed Erlang](https://www.erlang.org/docs/28/system/distributed.html)<br/>
+[4]: [Spectator](https://hexdocs.pm/spectator/)
