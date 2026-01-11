@@ -11,14 +11,14 @@ type State {
   State(my_subject: msg.CReqS(String), service_subject: msg.SReqS(String))
 }
 
-pub fn start_link(service_subject: msg.SReqS(String)) -> process.Pid {
-  let assert Ok(actor.Started(pid, _subject1)) =
-    actor.new_with_initialiser(100, fn(mysubject: msg.CReqS(String)) {
-      init(mysubject, service_subject)
-    })
-    |> actor.on_message(loop)
-    |> actor.start()
-  pid
+pub fn start_link(
+  service_subject: msg.SReqS(String),
+) -> actor.StartResult(msg.CReqS(String)) {
+  actor.new_with_initialiser(100, fn(mysubject: msg.CReqS(String)) {
+    init(mysubject, service_subject)
+  })
+  |> actor.on_message(loop)
+  |> actor.start()
 }
 
 fn init(

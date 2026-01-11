@@ -68,9 +68,7 @@ fn start_supervisor() -> Result(actor.Started(sup.Supervisor), actor.StartError)
 
   let service_subject = process.named_subject(service_name)
   let client_child =
-    supervision.worker(fn() {
-      Ok(actor.Started(client.start_link(service_subject), Nil))
-    })
+    supervision.worker(fn() { client.start_link(service_subject) })
 
   let factory_supervisor =
     fsup.worker_child(handler.start_link)
